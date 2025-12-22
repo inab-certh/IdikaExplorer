@@ -1,0 +1,23 @@
+Package: IdikaExplorer
+Title: Shiny application for IDIKA data
+Version: 0.0.0.9000
+Authors@R: 
+    person("Alexandros", "Rekkas", , "arekkas@certh.gr")
+Description: Shiny application for exploring the data extracted from the IDIKA database
+License: Apache License (>= 2)
+Imports: 
+    attempt,
+    config,
+    DBI,
+    dplyr,
+    DT,
+    duckdb,
+    glue,
+    golem,
+    htmltools,
+    shiny,
+    shinydashboard,
+    shinydashboardPlus
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 7.1.1
