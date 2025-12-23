@@ -23,7 +23,7 @@ app_ui <- function(request) {
           id = "menu1",
           shinydashboard::menuItem(
             tabName = "overall",
-            text = "Overall",
+            text = "Overall data",
             icon = shiny::icon("chart-simple")
           ),
           shinydashboard::menuItem(
@@ -35,7 +35,20 @@ app_ui <- function(request) {
       ),
 
       body = shinydashboard::dashboardBody(
-        mod_extractdata_ui("test_1")
+        shinydashboard::tabItems(
+          shinydashboard::tabItem(
+            tabName = "overall",
+            shiny::h2("Overall data"),
+            mod_data_filters_ui("filters_overall"),
+            mod_raw_table_ui("raw_table_1")
+          ),
+          shinydashboard::tabItem(
+            tabName = "subgroup_analysis",
+            shiny::h2("Subgroup analysis"),
+            mod_grouping_selector_ui("grouping_selector"),
+            mod_summary_table_ui("summary_table")
+          )
+        )
       ),
 
       # shinydashboardPlus exclusive features
@@ -46,7 +59,6 @@ app_ui <- function(request) {
   )
 }
 
-    
 #' Add external Resources to the Application
 #'
 #' This function is internally used to add external
@@ -64,7 +76,7 @@ golem_add_external_resources <- function() {
     golem::favicon(),
     golem::bundle_resources(
       path = golem::app_sys('app/www'),
-      app_title = 'myDashboardApp'
+      app_title = 'IdikaExplorer'
     ),
     # Custom CSS for Greek fonts if needed
     shiny::tags$style(htmltools::HTML("

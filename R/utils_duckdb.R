@@ -10,17 +10,18 @@ get_duckdb_connection <- function(db_path = NULL) {
     # Default path - you can set this in config
     db_path <- golem::get_golem_options("db_path")
   }
-  
+
   con <- DBI::dbConnect(
     duckdb::duckdb(),
     dbdir = db_path,
     read_only = TRUE
   )
-  
-  return(con)
+
+  con
 }
 
 generate_sql_query <- function(
+  prescription_insert_year = "all",
   age_group = "all",
   sex_id = "all",
   county = "all",
@@ -31,10 +32,13 @@ generate_sql_query <- function(
     if (paste(values, collapse = ",") == "all") {
       return("")
     }
-    glue::glue("{column_name} IN ({glue::glue_collapse(values, sep = ',')})")
+
+    quoted_values <- paste0("'", values, "'")
+    glue::glue("{column_name} IN ({glue::glue_collapse(quoted_values, sep = ',')})")
   }
 
   conditions <- c(
+    .build_condition(prescription_insert_year, "prescription_insert_year"),
     .build_condition(age_group, "age_group"),
     .build_condition(sex_id, "sex_id"),
     .build_condition(county, "county"),
