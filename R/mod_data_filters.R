@@ -34,7 +34,7 @@ mod_data_filters_ui <- function(id) {
       shiny::column(
         2,
         shiny::selectizeInput(
-          ns("sex_id"),
+          ns("sex"),
           "Sex:",
           choices = NULL,
           multiple = TRUE,
@@ -44,8 +44,8 @@ mod_data_filters_ui <- function(id) {
       shiny::column(
         2,
         shiny::selectizeInput(
-          ns("county"),
-          "County:",
+          ns("region"),
+          "Region:",
           choices = NULL,
           multiple = TRUE,
           options = list(placeholder = "Select counties...")
@@ -84,11 +84,25 @@ mod_data_filters_server <- function(id, con) {
     shiny::observe({
       shiny::req(con)
 
-      filter_columns <- c(
-        "prescription_insert_year",
-        "age_group", "sex_id", "county", "atc_code"
+      filter_tables <- c("age_group", "sex", "region")
+      values_1 <- purrr::map(
+        filter_tables,
+        ~ {
+          result <- DBI::dbGetQuery(
+            con,
+            glue::glue("SELECT DISTINCT {.x}_name FROM {.x} ORDER BY {.x}_name")
+          ) |> dplyr::pull()
+          result
+        }
       )
-      filter_values <- purrr::map(
+
+      names(values_1) <- filter_tables
+
+      filter_columns <- c(
+        "prescription_insert_year", "atc_code"
+      )
+
+      values_2 <- purrr::map(
         filter_columns,
         ~ {
           result <- DBI::dbGetQuery(
@@ -98,7 +112,9 @@ mod_data_filters_server <- function(id, con) {
           result
         }
       )
-      names(filter_values) <- filter_columns
+      names(values_2) <- filter_columns
+
+      filter_values <- c(values_1, values_2)
 
       shiny::updateSelectizeInput(
         session, "prescription_insert_year",
@@ -109,12 +125,12 @@ mod_data_filters_server <- function(id, con) {
         choices = filter_values$age_group
       )
       shiny::updateSelectizeInput(
-        session, "sex_id",
-        choices = filter_values$sex_id
+        session, "sex",
+        choices = filter_values$sex
       )
       shiny::updateSelectizeInput(
-        session, "county",
-        choices = filter_values$county
+        session, "region",
+        choices = filter_values$region
       )
       shiny::updateSelectizeInput(
         session, "atc_code",

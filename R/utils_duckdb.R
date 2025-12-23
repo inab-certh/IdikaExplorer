@@ -55,3 +55,31 @@ generate_sql_query <- function(
 
   sql_query
 }
+
+get_field_names <- function(con, table, ids) {
+  DBI::dbGetQuery(
+    conn = con,
+    glue::glue(
+      "
+      SELECT { table }_name
+      FROM { table }
+      WHERE { table }_id IN ({ glue::glue_collapse(ids, sep = ',') });
+      "
+    )
+  )
+}
+
+get_field_ids <- function(con, table, names) {
+
+  quoted_names <- paste0("'", names, "'")
+  DBI::dbGetQuery(
+    conn = con,
+    glue::glue(
+      "
+      SELECT { table }_id
+      FROM { table }
+      WHERE { table }_name IN ({ glue::glue_collapse(quoted_names, sep = ',') });
+      "
+    )
+  )
+}
