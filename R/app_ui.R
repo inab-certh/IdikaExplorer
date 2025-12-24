@@ -30,6 +30,11 @@ app_ui <- function(request) {
             tabName = "subgroup_analysis",
             text = "Subgroup analysis",
             icon = shiny::icon("magnifying-glass-chart")
+          ),
+          shinydashboard::menuItem(
+            tabName = "code_lookup",
+            text = "Code Definitions",
+            icon = shiny::icon("book-medical")
           )
         )
       ),
@@ -47,6 +52,11 @@ app_ui <- function(request) {
             shiny::h2("Subgroup analysis"),
             mod_grouping_selector_ui("grouping_selector"),
             mod_summary_table_ui("summary_table")
+          ),
+          shinydashboard::tabItem(
+            tabName = "code_lookup",
+            shiny::h2("Code Definitions"),
+            mod_code_lookup_ui("code_lookup")
           )
         )
       ),

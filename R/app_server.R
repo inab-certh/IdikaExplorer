@@ -98,6 +98,9 @@ app_server <- function(input, output, session) {
     "summary_table", 
     data_reactive = overall_display_data,
     grouping_vars_reactive = selected_grouping_vars,
-    denominator_reactive = pop_by_region  # Pass the entire reactive
+    denominator_reactive = pop_by_region
   )
+  
+  # Tab 3: Code Definitions
+  mod_code_lookup_server("code_lookup", con = con)
 }
