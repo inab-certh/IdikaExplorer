@@ -50,8 +50,44 @@ app_ui <- function(request) {
           shinydashboard::tabItem(
             tabName = "subgroup_analysis",
             shiny::h2("Subgroup analysis"),
+            # Grouping selector at the top, outside tabs
             mod_grouping_selector_ui("grouping_selector"),
-            mod_summary_table_ui("summary_table")
+            shiny::br(),
+            # Tabset for different views of the subgroup data
+            shiny::tabsetPanel(
+              id = "subgroup_tabs",
+              type = "tabs",
+              
+              # General tab - Summary table
+              shiny::tabPanel(
+                title = "General",
+                value = "general",
+                shiny::br(),
+                mod_summary_table_ui("summary_table")
+              ),
+              
+              # Time Series tab
+              shiny::tabPanel(
+                title = "Time Series",
+                value = "time_series",
+                shiny::br(),
+                mod_time_series_ui("time_series")
+              ),
+              
+              # Plot tab 3 - Placeholder for future visualization
+              shiny::tabPanel(
+                title = "Tab 3",
+                value = "tab3",
+                shiny::br(),
+                shiny::fluidRow(
+                  shiny::column(
+                    12,
+                    shiny::h4("Visualization 3"),
+                    shiny::helpText("Plot will be added here")
+                  )
+                )
+              )
+            )
           ),
           shinydashboard::tabItem(
             tabName = "code_lookup",

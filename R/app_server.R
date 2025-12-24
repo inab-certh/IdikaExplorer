@@ -94,11 +94,21 @@ app_server <- function(input, output, session) {
     message("========================\n")
   })
 
+  # Subgroup Analysis - General Tab (Summary Table)
   mod_summary_table_server(
     "summary_table", 
     data_reactive = overall_display_data,
     grouping_vars_reactive = selected_grouping_vars,
     denominator_reactive = pop_by_region
+  )
+  
+  # Subgroup Analysis - Time Series Tab
+  mod_time_series_server(
+    "time_series",
+    data_reactive = overall_display_data,
+    grouping_vars_reactive = selected_grouping_vars,
+    denominator_reactive = pop_by_region,
+    con = con
   )
   
   # Tab 3: Code Definitions
