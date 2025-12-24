@@ -5,20 +5,21 @@ mod_summary_table_ui <- function(id) {
   )
 }
 
-mod_summary_table_server <- function(id, data_reactive, grouping_vars_reactive) {
+mod_summary_table_server <- function(id, data_reactive, grouping_vars_reactive, denominator_reactive) {
   shiny::moduleServer(id, function(input, output, session) {
     ns <- session$ns
     
     output$summary_table <- DT::renderDataTable({
       data <- data_reactive()
       grouping_vars <- grouping_vars_reactive()
+      denominator_data <- denominator_reactive()
       
       shiny::req(nrow(data) > 0)
       
       message("Computing summary statistics...")
       message("Grouping by: ", paste(grouping_vars, collapse = ", "))
       
-      # If no grouping variables selected, show overall totals
+      # Calculate summary data
       if (length(grouping_vars) == 0) {
         summary_data <- data |>
           dplyr::summarise(
@@ -27,35 +28,121 @@ mod_summary_table_server <- function(id, data_reactive, grouping_vars_reactive) 
           ) |>
           dplyr::mutate(group = "Overall")
         
-        # Reorder columns to put 'group' first
+        summary_data$population <- denominator_data$denominator$population
+        
         summary_data <- summary_data |>
-          dplyr::select(group, dplyr::everything())
+          dplyr::select(group, total_prescriptions, unique_patients, population)
         
       } else {
-        # Group by selected variables
         summary_data <- data |>
           dplyr::group_by(dplyr::across(dplyr::all_of(grouping_vars))) |>
           dplyr::summarise(
             total_prescriptions = sum(total_prescriptions, na.rm = TRUE),
             unique_patients = sum(unique_patients, na.rm = TRUE),
             .groups = "drop"
+          )
+        
+        join_vars <- intersect(
+          grouping_vars,
+          names(denominator_data$denominator)
+        )
+        
+        message("Join variables: ", paste(join_vars, collapse = ", "))
+        
+        if (length(join_vars) > 0) {
+          summary_data <- summary_data |>
+            dplyr::left_join(
+              denominator_data$denominator,
+              by = join_vars
+            )
+        } else {
+          summary_data$population <- sum(denominator_data$denominator$population)
+        }
+        
+        summary_data <- summary_data |>
+          dplyr::mutate(
+            prescriptions_per_100k = (total_prescriptions / population) * 100000,
+            patients_per_100k = (unique_patients / population) * 100000
           ) |>
           dplyr::arrange(dplyr::desc(total_prescriptions))
       }
       
       message("Summary table has ", nrow(summary_data), " rows")
       
-      DT::datatable(
+      # Identify column types for formatting
+      count_cols <- intersect(
+        c("total_prescriptions", "unique_patients", "population"),
+        names(summary_data)
+      )
+      
+      rate_cols <- intersect(
+        c("prescriptions_per_100k", "patients_per_100k"),
+        names(summary_data)
+      )
+      
+      # Create base datatable
+      dt <- DT::datatable(
         summary_data,
         options = list(
           pageLength = 25,
           scrollX = TRUE,
-          autoWidth = TRUE
+          autoWidth = TRUE,
+          scrollCollapse = FALSE,
+          dom = 'Bfrtip',
+          buttons = c('copy', 'csv', 'excel'),
+          columnDefs = list(
+            list(className = 'dt-center', targets = '_all')
+          ),
+          initComplete = DT::JS(
+            "function(settings, json) {",
+            "  setTimeout(function() {",
+            "    $(settings.nTable).DataTable().columns.adjust();",
+            "  }, 100);",
+            "}"
+          )
         ),
+        extensions = 'Buttons',
         filter = "top",
-        rownames = FALSE
+        rownames = FALSE,
+        class = 'cell-border stripe hover'
       ) |>
-        DT::formatRound(columns = c("total_prescriptions", "unique_patients"), digits = 0)
+        DT::formatRound(columns = count_cols, digits = 0, mark = ",")
+      
+      # Add styled bars for prescriptions per 100k (starting from zero)
+      if ("prescriptions_per_100k" %in% names(summary_data)) {
+        dt <- dt |>
+          DT::formatStyle(
+            "prescriptions_per_100k",
+            background = DT::styleColorBar(
+              c(0, max(summary_data$prescriptions_per_100k, na.rm = TRUE)),
+              color = "rgba(70, 130, 180, 0.35)"  # Steel blue with transparency
+            ),
+            backgroundSize = "95% 80%",
+            backgroundRepeat = "no-repeat",
+            backgroundPosition = "center",
+            fontWeight = "500"
+          ) |>
+          DT::formatRound(columns = "prescriptions_per_100k", digits = 1, mark = ",")
+      }
+      
+      # Add styled bars for patients per 100k (starting from zero)
+      if ("patients_per_100k" %in% names(summary_data)) {
+        dt <- dt |>
+          DT::formatStyle(
+            "patients_per_100k",
+            background = DT::styleColorBar(
+              c(0, max(summary_data$patients_per_100k, na.rm = TRUE)),
+              color = "rgba(46, 204, 113, 0.35)"  # Emerald green with transparency
+            ),
+            backgroundSize = "95% 80%",
+            backgroundRepeat = "no-repeat",
+            backgroundPosition = "center",
+            fontWeight = "500"
+          ) |>
+          DT::formatRound(columns = "patients_per_100k", digits = 1, mark = ",")
+      }
+      
+      dt
     })
   })
 }

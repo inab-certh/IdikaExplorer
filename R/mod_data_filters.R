@@ -143,30 +143,76 @@ mod_data_filters_server <- function(id, con) {
       {
         shiny::req(con)
 
-        age_group_val <- if (length(input$age_group) == 0) "all" else input$age_group
-        sex_id_val <- if (length(input$sex_id) == 0) "all" else input$sex_id
-        county_val <- if (length(input$county) == 0) "all" else input$county
+        if (length(input$age_group) == 0) {
+          age_group_val <- "all"
+        } else {
+          age_group_val <- get_field_ids(con, "age_group", input$age_group)
+        }
+
+        if (length(input$sex) == 0) {
+          sex_val <- "all"
+        } else {
+          sex_val <- get_field_ids(con, "sex", input$sex)
+        }
+
+        if (length(input$region) == 0) {
+          region_val <- "all"
+        } else {
+          region_val <- get_field_ids(con, "region", input$region)
+        }
+
         atc_code_val <- if (length(input$atc_code) == 0) "all" else input$atc_code
         prescription_insert_year_val <- if (length(input$prescription_insert_year) == 0) "all" else input$prescription_insert_year
 
         sql_query <- generate_sql_query(
+          table = "idika",
           prescription_insert_year = prescription_insert_year_val,
           age_group = age_group_val,
-          sex_id = sex_id_val,
-          county = county_val,
+          sex = sex_val,
+          region = region_val,
           atc_code = atc_code_val
         )
 
         result <- DBI::dbGetQuery(con, sql_query)
-        result
+        result |>
+          dplyr::mutate(
+            sex = get_field_names(con, "sex", sex_id),
+            age_group = get_field_names(con, "age_group", age_group_id),
+            region = get_field_names(con, "region", region_id)
+          ) |>
+          dplyr::select(
+            c(
+              "prescription_insert_year", "region", "age_group",
+              "sex", "icd10", "atc_code", "total_prescriptions",
+              "unique_patients"
+            )
+          )
       },
       ignoreNULL = FALSE
     )
 
-    initial_data <- shiny::reactive({
+    # initial_data <- shiny::reactive({
+    #   shiny::req(con)
+    #   result <- DBI::dbGetQuery(con, "SELECT * FROM idika LIMIT 1000")
+    #   result
+    # })
+
+        initial_data <- shiny::reactive({
       shiny::req(con)
       result <- DBI::dbGetQuery(con, "SELECT * FROM idika LIMIT 1000")
-      result
+      result |>
+        dplyr::mutate(
+          sex = get_field_names(con, "sex", sex_id),
+          age_group = get_field_names(con, "age_group", age_group_id),
+          region = get_field_names(con, "region", region_id)
+        ) |>
+        dplyr::select(
+          c(
+            "prescription_insert_year", "region", "age_group",
+            "sex", "icd10", "atc_code", "total_prescriptions",
+            "unique_patients"
+          )
+        )
     })
 
     shiny::observeEvent(input$reset_btn, {

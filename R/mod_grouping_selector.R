@@ -37,7 +37,7 @@ mod_grouping_selector_ui <- function(id) {
       shiny::column(
         2,
         shiny::checkboxInput(
-          ns("group_sex_id"),
+          ns("group_sex"),
           "Group by Sex",
           value = FALSE
         )
@@ -45,8 +45,8 @@ mod_grouping_selector_ui <- function(id) {
       shiny::column(
         2,
         shiny::checkboxInput(
-          ns("group_county"),
-          "Group by County",
+          ns("group_region"),
+          "Group by region",
           value = FALSE
         )
       ),
@@ -72,25 +72,18 @@ mod_grouping_selector_server <- function(id, filtered_data_reactive) {
   shiny::moduleServer(id, function(input, output, session) {
     ns <- session$ns
     
-    # Track which grouping variables are available based on filtered data
     available_groups <- shiny::reactive({
       data <- filtered_data_reactive()
       shiny::req(nrow(data) > 0)
       
-      # Check which columns have 2+ unique values
       available <- list(
         prescription_insert_year = length(unique(data$prescription_insert_year)) >= 2,
         age_group = length(unique(data$age_group)) >= 2,
-        sex_id = length(unique(data$sex_id)) >= 2,
-        county = length(unique(data$county)) >= 2,
+        sex = length(unique(data$sex)) >= 2,
+        region = length(unique(data$region)) >= 2,
         atc_code = length(unique(data$atc_code)) >= 2
       )
       
-      message("Available grouping options:")
-      message("  age_group: ", available$age_group, " (", length(unique(data$age_group)), " unique)")
-      message("  sex_id: ", available$sex_id, " (", length(unique(data$sex_id)), " unique)")
-      message("  county: ", available$county, " (", length(unique(data$county)), " unique)")
-      message("  atc_code: ", available$atc_code, " (", length(unique(data$atc_code)), " unique)")
       
       available
     })
@@ -102,8 +95,8 @@ mod_grouping_selector_server <- function(id, filtered_data_reactive) {
       groups <- c()
       if (input$group_prescription_insert_year) groups <- c(groups, "prescription_insert_year")
       if (input$group_age_group) groups <- c(groups, "age_group")
-      if (input$group_sex_id) groups <- c(groups, "sex_id")
-      if (input$group_county) groups <- c(groups, "county")
+      if (input$group_sex) groups <- c(groups, "sex")
+      if (input$group_region) groups <- c(groups, "region")
       if (input$group_atc_code) groups <- c(groups, "atc_code")
       
       message("Selected grouping variables: ", paste(groups, collapse = ", "))

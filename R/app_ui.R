@@ -78,11 +78,41 @@ golem_add_external_resources <- function() {
       path = golem::app_sys('app/www'),
       app_title = 'IdikaExplorer'
     ),
-    # Custom CSS for Greek fonts if needed
+    # Custom CSS for Greek fonts and DataTable fixes
     shiny::tags$style(htmltools::HTML("
       body {
         font-family: 'Roboto', 'Helvetica Neue', Arial, sans-serif;
       }
+      
+      /* Fix DataTable alignment issues */
+      .dataTables_wrapper {
+        width: 100% !important;
+      }
+      
+      .dataTables_scrollBody {
+        width: 100% !important;
+      }
+      
+      table.dataTable {
+        width: 100% !important;
+        margin: 0 auto;
+      }
+      
+      .tab-content {
+        overflow: visible !important;
+      }
+    ")),
+    # JavaScript to recalculate DataTables on tab switch
+    shiny::tags$script(htmltools::HTML("
+      $(document).ready(function() {
+        $('.sidebar-menu li a').on('click', function() {
+          setTimeout(function() {
+            if ($.fn.DataTable) {
+              $.fn.dataTable.tables({visible: true, api: true}).columns.adjust();
+            }
+          }, 200);
+        });
+      });
     "))
   )
 }

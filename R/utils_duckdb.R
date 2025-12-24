@@ -21,65 +21,47 @@ get_duckdb_connection <- function(db_path = NULL) {
 }
 
 generate_sql_query <- function(
+  table = "idika",
   prescription_insert_year = "all",
   age_group = "all",
-  sex_id = "all",
-  county = "all",
+  sex = "all",
+  region = "all",
   atc_code = "all"
 ) {
 
-  .build_condition <- function(values, column_name) {
-    if (paste(values, collapse = ",") == "all") {
-      return("")
-    }
-
-    quoted_values <- paste0("'", values, "'")
-    glue::glue("{column_name} IN ({glue::glue_collapse(quoted_values, sep = ',')})")
+  if (table == "idika") {
+    conditions <- c(
+      build_condition(prescription_insert_year, "prescription_insert_year"),
+      build_condition(age_group, "age_group_id"),
+      build_condition(sex, "sex_id"),
+      build_condition(region, "region_id"),
+      build_condition(atc_code, "atc_code")
+    )
+  } else if (table == "population_by_region") {
+    conditions <- c(
+      build_condition(age_group, "age_group_id"),
+      build_condition(sex, "sex_id"),
+      build_condition(region, "region_id")
+    )
   }
 
-  conditions <- c(
-    .build_condition(prescription_insert_year, "prescription_insert_year"),
-    .build_condition(age_group, "age_group"),
-    .build_condition(sex_id, "sex_id"),
-    .build_condition(county, "county"),
-    .build_condition(atc_code, "atc_code")
-  )
   conditions <- conditions[conditions != ""]
 
   if (length(conditions) > 0) {
     where_clause <- glue::glue_collapse(conditions, sep = " AND ")
-    sql_query <- glue::glue("SELECT * FROM idika WHERE {where_clause}")
+    sql_query <- glue::glue("SELECT * FROM { table } WHERE {where_clause}")
   } else {
-    sql_query <- "SELECT * FROM idika"
+    sql_query <- "SELECT * FROM { table }"
   }
 
   sql_query
 }
 
-get_field_names <- function(con, table, ids) {
-  DBI::dbGetQuery(
-    conn = con,
-    glue::glue(
-      "
-      SELECT { table }_name
-      FROM { table }
-      WHERE { table }_id IN ({ glue::glue_collapse(ids, sep = ',') });
-      "
-    )
-  )
-}
+build_condition <- function(values, column_name) {
+  if (paste(values, collapse = ",") == "all") {
+    return("")
+  }
 
-get_field_ids <- function(con, table, names) {
-
-  quoted_names <- paste0("'", names, "'")
-  DBI::dbGetQuery(
-    conn = con,
-    glue::glue(
-      "
-      SELECT { table }_id
-      FROM { table }
-      WHERE { table }_name IN ({ glue::glue_collapse(quoted_names, sep = ',') });
-      "
-    )
-  )
+  quoted_values <- paste0("'", values, "'")
+  glue::glue("{column_name} IN ({glue::glue_collapse(quoted_values, sep = ',')})")
 }
