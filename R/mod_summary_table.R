@@ -69,14 +69,42 @@ mod_summary_table_server <- function(id, data_reactive, grouping_vars_reactive, 
       
       message("Summary table has ", nrow(summary_data), " rows")
       
-      # Identify column types for formatting
+      # Create nice column names mapping
+      column_name_map <- c(
+        "prescription_insert_year" = "Year",
+        "age_group" = "Age",
+        "sex" = "Sex",
+        "region" = "Region",
+        "icd10" = "ICD-10",
+        "atc_code" = "ATC Code",
+        "group" = "Group",
+        "total_prescriptions" = "Total Prescriptions",
+        "unique_patients" = "Unique Patients",
+        "population" = "Population",
+        "prescriptions_per_100k" = "Prescriptions per 100K",
+        "patients_per_100k" = "Patients per 100K"
+      )
+      
+      # Rename columns to nice names
+      current_names <- names(summary_data)
+      nice_names <- sapply(current_names, function(name) {
+        if (name %in% names(column_name_map)) {
+          column_name_map[name]
+        } else {
+          name
+        }
+      }, USE.NAMES = FALSE)
+      
+      names(summary_data) <- nice_names
+      
+      # Identify column types for formatting (using NEW nice names)
       count_cols <- intersect(
-        c("total_prescriptions", "unique_patients", "population"),
+        c("Total Prescriptions", "Unique Patients", "Population"),
         names(summary_data)
       )
       
       rate_cols <- intersect(
-        c("prescriptions_per_100k", "patients_per_100k"),
+        c("Prescriptions per 100K", "Patients per 100K"),
         names(summary_data)
       )
       
@@ -109,12 +137,12 @@ mod_summary_table_server <- function(id, data_reactive, grouping_vars_reactive, 
         DT::formatRound(columns = count_cols, digits = 0, mark = ",")
       
       # Add styled bars for prescriptions per 100k (starting from zero)
-      if ("prescriptions_per_100k" %in% names(summary_data)) {
+      if ("Prescriptions per 100K" %in% names(summary_data)) {
         dt <- dt |>
           DT::formatStyle(
-            "prescriptions_per_100k",
+            "Prescriptions per 100K",
             background = DT::styleColorBar(
-              c(0, max(summary_data$prescriptions_per_100k, na.rm = TRUE)),
+              c(0, max(summary_data$`Prescriptions per 100K`, na.rm = TRUE)),
               color = "rgba(70, 130, 180, 0.35)"  # Steel blue with transparency
             ),
             backgroundSize = "95% 80%",
@@ -122,16 +150,16 @@ mod_summary_table_server <- function(id, data_reactive, grouping_vars_reactive, 
             backgroundPosition = "center",
             fontWeight = "500"
           ) |>
-          DT::formatRound(columns = "prescriptions_per_100k", digits = 1, mark = ",")
+          DT::formatRound(columns = "Prescriptions per 100K", digits = 1, mark = ",")
       }
       
       # Add styled bars for patients per 100k (starting from zero)
-      if ("patients_per_100k" %in% names(summary_data)) {
+      if ("Patients per 100K" %in% names(summary_data)) {
         dt <- dt |>
           DT::formatStyle(
-            "patients_per_100k",
+            "Patients per 100K",
             background = DT::styleColorBar(
-              c(0, max(summary_data$patients_per_100k, na.rm = TRUE)),
+              c(0, max(summary_data$`Patients per 100K`, na.rm = TRUE)),
               color = "rgba(46, 204, 113, 0.35)"  # Emerald green with transparency
             ),
             backgroundSize = "95% 80%",
@@ -139,7 +167,7 @@ mod_summary_table_server <- function(id, data_reactive, grouping_vars_reactive, 
             backgroundPosition = "center",
             fontWeight = "500"
           ) |>
-          DT::formatRound(columns = "patients_per_100k", digits = 1, mark = ",")
+          DT::formatRound(columns = "Patients per 100K", digits = 1, mark = ",")
       }
       
       dt

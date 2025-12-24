@@ -23,6 +23,31 @@ mod_raw_table_server <- function(id, data_reactive){
     output$table <- DT::renderDataTable({
       data <- data_reactive()
       print(nrow(data))
+      
+      # Create nice column names mapping
+      column_name_map <- c(
+        "prescription_insert_year" = "Year",
+        "age_group" = "Age",
+        "sex" = "Sex",
+        "region" = "Region",
+        "icd10" = "ICD-10",
+        "atc_code" = "ATC Code",
+        "total_prescriptions" = "Total Prescriptions",
+        "unique_patients" = "Unique Patients"
+      )
+      
+      # Rename columns to nice names
+      current_names <- names(data)
+      nice_names <- sapply(current_names, function(name) {
+        if (name %in% names(column_name_map)) {
+          column_name_map[name]
+        } else {
+          name
+        }
+      }, USE.NAMES = FALSE)
+      
+      names(data) <- nice_names
+      
       DT::datatable(
         data,
         options = list(
@@ -30,7 +55,8 @@ mod_raw_table_server <- function(id, data_reactive){
           scrollX = TRUE,
           autoWidth = TRUE
         ),
-        filter = "top"
+        filter = "top",
+        rownames = FALSE
       )
     })
   })

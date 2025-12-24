@@ -48,7 +48,17 @@ mod_data_filters_ui <- function(id) {
           "Region:",
           choices = NULL,
           multiple = TRUE,
-          options = list(placeholder = "Select counties...")
+          options = list(placeholder = "Select regions...")
+        )
+      ),
+      shiny::column(
+        2,
+        shiny::selectizeInput(
+          ns("icd10"),
+          "ICD-10:",
+          choices = NULL,
+          multiple = TRUE,
+          options = list(placeholder = "Select ICD-10 codes...")
         )
       ),
       shiny::column(
@@ -99,7 +109,7 @@ mod_data_filters_server <- function(id, con) {
       names(values_1) <- filter_tables
 
       filter_columns <- c(
-        "prescription_insert_year", "atc_code"
+        "prescription_insert_year", "icd10", "atc_code"
       )
 
       values_2 <- purrr::map(
@@ -133,6 +143,10 @@ mod_data_filters_server <- function(id, con) {
         choices = filter_values$region
       )
       shiny::updateSelectizeInput(
+        session, "icd10",
+        choices = filter_values$icd10
+      )
+      shiny::updateSelectizeInput(
         session, "atc_code",
         choices = filter_values$atc_code
       )
@@ -161,6 +175,7 @@ mod_data_filters_server <- function(id, con) {
           region_val <- get_field_ids(con, "region", input$region)
         }
 
+        icd10_val <- if (length(input$icd10) == 0) "all" else input$icd10
         atc_code_val <- if (length(input$atc_code) == 0) "all" else input$atc_code
         prescription_insert_year_val <- if (length(input$prescription_insert_year) == 0) "all" else input$prescription_insert_year
 
@@ -170,6 +185,7 @@ mod_data_filters_server <- function(id, con) {
           age_group = age_group_val,
           sex = sex_val,
           region = region_val,
+          icd10 = icd10_val,
           atc_code = atc_code_val
         )
 
@@ -191,13 +207,7 @@ mod_data_filters_server <- function(id, con) {
       ignoreNULL = FALSE
     )
 
-    # initial_data <- shiny::reactive({
-    #   shiny::req(con)
-    #   result <- DBI::dbGetQuery(con, "SELECT * FROM idika LIMIT 1000")
-    #   result
-    # })
-
-        initial_data <- shiny::reactive({
+    initial_data <- shiny::reactive({
       shiny::req(con)
       result <- DBI::dbGetQuery(con, "SELECT * FROM idika LIMIT 1000")
       result |>
@@ -225,11 +235,15 @@ mod_data_filters_server <- function(id, con) {
         selected = character(0)
       )
       shiny::updateSelectizeInput(
-        session, "sex_id",
+        session, "sex",
         selected = character(0)
       )
       shiny::updateSelectizeInput(
-        session, "county",
+        session, "region",
+        selected = character(0)
+      )
+      shiny::updateSelectizeInput(
+        session, "icd10",
         selected = character(0)
       )
       shiny::updateSelectizeInput(

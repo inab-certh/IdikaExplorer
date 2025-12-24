@@ -46,7 +46,15 @@ mod_grouping_selector_ui <- function(id) {
         2,
         shiny::checkboxInput(
           ns("group_region"),
-          "Group by region",
+          "Group by Region",
+          value = FALSE
+        )
+      ),
+      shiny::column(
+        2,
+        shiny::checkboxInput(
+          ns("group_icd10"),
+          "Group by ICD-10",
           value = FALSE
         )
       ),
@@ -81,6 +89,7 @@ mod_grouping_selector_server <- function(id, filtered_data_reactive) {
         age_group = length(unique(data$age_group)) >= 2,
         sex = length(unique(data$sex)) >= 2,
         region = length(unique(data$region)) >= 2,
+        icd10 = length(unique(data$icd10)) >= 2,
         atc_code = length(unique(data$atc_code)) >= 2
       )
       
@@ -97,6 +106,7 @@ mod_grouping_selector_server <- function(id, filtered_data_reactive) {
       if (input$group_age_group) groups <- c(groups, "age_group")
       if (input$group_sex) groups <- c(groups, "sex")
       if (input$group_region) groups <- c(groups, "region")
+      if (input$group_icd10) groups <- c(groups, "icd10")
       if (input$group_atc_code) groups <- c(groups, "atc_code")
       
       message("Selected grouping variables: ", paste(groups, collapse = ", "))

@@ -26,6 +26,7 @@ generate_sql_query <- function(
   age_group = "all",
   sex = "all",
   region = "all",
+  icd10 = "all",
   atc_code = "all"
 ) {
 
@@ -35,6 +36,7 @@ generate_sql_query <- function(
       build_condition(age_group, "age_group_id"),
       build_condition(sex, "sex_id"),
       build_condition(region, "region_id"),
+      build_condition(icd10, "icd10"),
       build_condition(atc_code, "atc_code")
     )
   } else if (table == "population_by_region") {
