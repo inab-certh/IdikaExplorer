@@ -1,4 +1,4 @@
-devtools::load_all()
+
 # Script to set up and run the Shiny app
 # This script will:
 # 1. Install renv if not already installed
@@ -39,21 +39,6 @@ log_message("Package restoration complete!")
 log_message("Loading the app...")
 
 # Get the package name from DESCRIPTION file
-if (file.exists("DESCRIPTION")) {
-  desc <- read.dcf("DESCRIPTION")
-  pkg_name <- desc[1, "Package"]
-  log_message(paste0("Package name: ", pkg_name))
-  
-  # Load the package
-  library(pkg_name, character.only = TRUE)
-  
-  # Run the app
-  log_message("Launching the Shiny app...")
-  run_app <- get("run_app", envir = asNamespace(pkg_name))
-  run_app()
-  
-} else {
-  stop("Error: DESCRIPTION file not found. 
-       Please make sure you are running this script from the app's root directory.")
-}
+
+devtools::load_all()
 run_app()

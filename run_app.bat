@@ -30,7 +30,7 @@ echo Found R at: %RSCRIPT%
 echo.
 
 REM Run the R script
-"%RSCRIPT%" run_app.R
+"%RSCRIPT%" run.R
 
 echo.
 echo ========================================
