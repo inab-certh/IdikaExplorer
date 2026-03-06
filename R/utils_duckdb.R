@@ -121,14 +121,25 @@ generate_sql_query <- function(
     where_clause <- glue::glue_collapse(conditions, sep = " AND ")
     sql_query <- glue::glue("SELECT * FROM { table } WHERE {where_clause}")
   } else {
-    sql_query <- "SELECT * FROM { table }"
+    sql_query <- glue::glue("SELECT * FROM { table }")
   }
 
   sql_query
 }
 
+# build_condition <- function(values, column_name) {
+#   if (paste(values, collapse = ",") == "all") {
+#     return("")
+#   }
+# 
+#   quoted_values <- paste0("'", values, "'")
+#   glue::glue("{column_name} IN ({glue::glue_collapse(quoted_values, sep = ',')})")
+# }
+
 build_condition <- function(values, column_name) {
-  if (paste(values, collapse = ",") == "all") {
+  values <- unlist(values)  # coerce list to vector
+
+  if (length(values) == 0 || identical(as.character(values), "all")) {
     return("")
   }
 

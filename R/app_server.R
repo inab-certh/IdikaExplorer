@@ -110,6 +110,13 @@ app_server <- function(input, output, session) {
     denominator_reactive = pop_by_region,
     con = con
   )
+
+  # Subgroup Analysis - Map Tab
+  mod_map_server(
+    "map_view",
+    data_reactive = overall_display_data,
+    con = con
+  )
   
   # Tab 3: Code Definitions
   mod_code_lookup_server("code_lookup", con = con)

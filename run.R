@@ -41,4 +41,4 @@ log_message("Loading the app...")
 # Get the package name from DESCRIPTION file
 
 devtools::load_all()
-run_app()
+run_app(options = list(port = 8080))

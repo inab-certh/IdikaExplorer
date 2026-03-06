@@ -74,18 +74,12 @@ app_ui <- function(request) {
                 mod_time_series_ui("time_series")
               ),
               
-              # Plot tab 3 - Placeholder for future visualization
+              # Map tab
               shiny::tabPanel(
-                title = "Tab 3",
-                value = "tab3",
+                title = "Map",
+                value = "map",
                 shiny::br(),
-                shiny::fluidRow(
-                  shiny::column(
-                    12,
-                    shiny::h4("Visualization 3"),
-                    shiny::helpText("Plot will be added here")
-                  )
-                )
+                mod_map_ui("map_view")
               )
             )
           ),
