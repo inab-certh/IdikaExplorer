@@ -58,7 +58,19 @@ mod_data_filters_ui <- function(id) {
           "ICD-10:",
           choices = NULL,
           multiple = TRUE,
-          options = list(placeholder = "Select ICD-10 codes...")
+          # create = TRUE allows typing arbitrary values (including wildcards)
+          options = list(
+            placeholder = "Select or type ICD-10 codes...",
+            create = TRUE,
+            createOnBlur = TRUE,
+            persist = FALSE
+          )
+        ),
+        shiny::tags$small(
+          class = "text-muted",
+          shiny::icon("circle-info", style = "font-size:0.8em;"),
+          " Use * as wildcard, e.g. ",
+          shiny::tags$code("E11*")
         )
       ),
       shiny::column(
@@ -68,7 +80,19 @@ mod_data_filters_ui <- function(id) {
           "ATC Code:",
           choices = NULL,
           multiple = TRUE,
-          options = list(placeholder = "Select ATC Codes...")
+          # create = TRUE allows typing arbitrary values (including wildcards)
+          options = list(
+            placeholder = "Select or type ATC codes...",
+            create = TRUE,
+            createOnBlur = TRUE,
+            persist = FALSE
+          )
+        ),
+        shiny::tags$small(
+          class = "text-muted",
+          shiny::icon("circle-info", style = "font-size:0.8em;"),
+          " Use * as wildcard, e.g. ",
+          shiny::tags$code("N06AB*")
         )
       )
     ),
@@ -175,9 +199,23 @@ mod_data_filters_server <- function(id, con) {
           region_val <- get_field_ids(con, "region", input$region)
         }
 
-        icd10_val <- if (length(input$icd10) == 0) "all" else input$icd10
-        atc_code_val <- if (length(input$atc_code) == 0) "all" else input$atc_code
-        prescription_insert_year_val <- if (length(input$prescription_insert_year) == 0) "all" else input$prescription_insert_year
+        # ICD-10 and ATC accept plain values AND wildcard patterns.
+        # Wildcards are passed through as-is; build_condition() handles them.
+        icd10_val     <- if (length(input$icd10) == 0)     "all" else input$icd10
+        atc_code_val  <- if (length(input$atc_code) == 0)  "all" else input$atc_code
+        prescription_insert_year_val <-
+          if (length(input$prescription_insert_year) == 0) "all"
+          else input$prescription_insert_year
+
+        # Log wildcard usage for debugging
+        has_icd10_wildcards   <- any(grepl("[*?]", icd10_val))
+        has_atc_wildcards     <- any(grepl("[*?]", atc_code_val))
+        if (has_icd10_wildcards)
+          message("ICD-10 wildcard patterns detected: ",
+                  paste(icd10_val[grepl("[*?]", icd10_val)], collapse = ", "))
+        if (has_atc_wildcards)
+          message("ATC wildcard patterns detected: ",
+                  paste(atc_code_val[grepl("[*?]", atc_code_val)], collapse = ", "))
 
         sql_query <- generate_sql_query(
           table = "idika",
@@ -188,6 +226,8 @@ mod_data_filters_server <- function(id, con) {
           icd10 = icd10_val,
           atc_code = atc_code_val
         )
+
+        message("Executing query: ", sql_query)
 
         result <- DBI::dbGetQuery(con, sql_query)
         result |>

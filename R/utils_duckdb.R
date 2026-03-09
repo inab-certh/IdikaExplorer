@@ -104,8 +104,8 @@ generate_sql_query <- function(
       build_condition(age_group, "age_group_id"),
       build_condition(sex, "sex_id"),
       build_condition(region, "region_id"),
-      build_condition(icd10, "icd10"),
-      build_condition(atc_code, "atc_code")
+      build_condition(icd10, "icd10", use_like = TRUE),
+      build_condition(atc_code, "atc_code", use_like = TRUE)
     )
   } else if (table == "population_by_region") {
     conditions <- c(
@@ -127,22 +127,86 @@ generate_sql_query <- function(
   sql_query
 }
 
-# build_condition <- function(values, column_name) {
-#   if (paste(values, collapse = ",") == "all") {
-#     return("")
-#   }
-# 
-#   quoted_values <- paste0("'", values, "'")
-#   glue::glue("{column_name} IN ({glue::glue_collapse(quoted_values, sep = ',')})")
-# }
+#' Check if a value string contains a wildcard pattern
+#' @param value A single character string
+#' @return TRUE if the value contains * or ? wildcards
+#' @noRd
+is_wildcard_pattern <- function(value) {
+  grepl("[*?]", value, fixed = FALSE)
+}
 
-build_condition <- function(values, column_name) {
-  values <- unlist(values)  # coerce list to vector
+#' Convert a user-supplied wildcard pattern to a SQL LIKE pattern
+#' Replaces * with % and ? with _
+#' @param pattern A wildcard pattern string
+#' @return A SQL LIKE-compatible pattern string
+#' @noRd
+wildcard_to_sql_like <- function(pattern) {
+  # Escape any existing SQL special chars first (%, _) that aren't our wildcards
+  pattern <- gsub("%", "\\%", pattern, fixed = TRUE)
+  pattern <- gsub("_", "\\_", pattern, fixed = TRUE)
+  # Now convert user wildcards
+  pattern <- gsub("*", "%", pattern, fixed = TRUE)
+  pattern <- gsub("?", "_", pattern, fixed = TRUE)
+  pattern
+}
+
+#' Build a SQL WHERE condition for a column, supporting wildcards
+#'
+#' For columns where \code{use_like = TRUE}, each value is checked:
+#' - If it contains \code{*} or \code{?}, it is emitted as a
+#'   \code{LIKE} clause (case-insensitive via \code{ILIKE} or \code{UPPER()}).
+#' - Otherwise it is treated as a plain equality / \code{IN} value.
+#'
+#' Multiple values are combined with \code{OR} and wrapped in parentheses.
+#'
+#' @param values Character vector of filter values, or \code{"all"}.
+#' @param column_name Name of the database column.
+#' @param use_like Logical; enable wildcard expansion for this column.
+#' @return A SQL condition string, or \code{""} if no filtering is needed.
+#' @noRd
+build_condition <- function(values, column_name, use_like = FALSE) {
+  values <- unlist(values)
 
   if (length(values) == 0 || identical(as.character(values), "all")) {
     return("")
   }
 
-  quoted_values <- paste0("'", values, "'")
-  glue::glue("{column_name} IN ({glue::glue_collapse(quoted_values, sep = ',')})")
+  if (!use_like) {
+    # Original behaviour: simple IN clause
+    quoted_values <- paste0("'", values, "'")
+    return(glue::glue(
+      "{column_name} IN ({glue::glue_collapse(quoted_values, sep = ',')})"
+    ))
+  }
+
+  # Split values into plain (exact match) and wildcard (LIKE match)
+  has_wildcard <- vapply(values, is_wildcard_pattern, logical(1))
+
+  exact_values   <- values[!has_wildcard]
+  pattern_values <- values[has_wildcard]
+
+  clauses <- character(0)
+
+  # Exact matches → IN (...)
+  if (length(exact_values) > 0) {
+    quoted <- paste0("'", exact_values, "'")
+    clauses <- c(
+      clauses,
+      glue::glue("{column_name} IN ({glue::glue_collapse(quoted, sep = ',')})")
+    )
+  }
+
+  # Wildcard matches → UPPER(col) LIKE UPPER('pattern')  [case-insensitive]
+  for (pat in pattern_values) {
+    sql_pat <- wildcard_to_sql_like(pat)
+    clauses <- c(
+      clauses,
+      glue::glue("UPPER({column_name}) LIKE UPPER('{sql_pat}')")
+    )
+  }
+
+  if (length(clauses) == 0) return("")
+  if (length(clauses) == 1) return(clauses)
+
+  paste0("(", paste(clauses, collapse = " OR "), ")")
 }
