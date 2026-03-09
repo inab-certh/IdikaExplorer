@@ -17,6 +17,7 @@ Imports:
     glue,
     golem,
     htmltools,
+    leaflet,
     plotly,
     readr,
     shiny,

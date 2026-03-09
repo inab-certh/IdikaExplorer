@@ -46,7 +46,6 @@ app_server <- function(input, output, session) {
       region = region
     )
 
-    # Only keep grouping vars that exist in population table
     applied_grouping_vars <- intersect(
       grouping_vars,
       c("age_group", "sex", "region")
@@ -70,7 +69,6 @@ app_server <- function(input, output, session) {
             .names = "{sub('_id$', '', .col)}"
           )
         ) |>
-        # Remove _id columns after creating name columns
         dplyr::select(-dplyr::ends_with("_id"))
     } else {
       denominator <- data.frame(
@@ -85,7 +83,6 @@ app_server <- function(input, output, session) {
     )
   })
 
-  # Debug: print the denominator
   shiny::observe({
     pp <- pop_by_region()
     message("\n=== Denominator Data ===")
@@ -114,6 +111,13 @@ app_server <- function(input, output, session) {
   # Subgroup Analysis - Map Tab
   mod_map_server(
     "map_view",
+    data_reactive = overall_display_data,
+    con = con
+  )
+
+  # Subgroup Analysis - Heatmap Tab
+  mod_heatmap_server(
+    "heatmap_view",
     data_reactive = overall_display_data,
     con = con
   )

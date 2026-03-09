@@ -145,10 +145,11 @@ mod_map_ui <- function(id) {
           ns("map_metric"),
           "Select Metric to Map:",
           choices = c(
-            "Total Prescriptions"    = "total_prescriptions",
-            "Unique Patients"        = "unique_patients",
-            "Prescriptions per 100K" = "prescriptions_per_100k",
-            "Patients per 100K"      = "patients_per_100k"
+            "Total Prescriptions"        = "total_prescriptions",
+            "Unique Patients"            = "unique_patients",
+            "Prescriptions per 100K"     = "prescriptions_per_100k",
+            "Patients per 100K"          = "patients_per_100k",
+            "Prescriptions per Patient"  = "prescriptions_per_patient"
           ),
           selected = "total_prescriptions"
         )
@@ -280,7 +281,7 @@ mod_map_server <- function(id, data_reactive, con) {
       lookup[lookup$db_region %in% db_regions, ]
     })
 
-    # 4. Aggregate active data and join to the independent map denominator
+    # 4. Aggregate active data, join to denominator, compute all metrics
     region_aggregated_data <- shiny::reactive({
       data     <- data_reactive()
       pop_data <- map_denominator()
@@ -293,6 +294,14 @@ mod_map_server <- function(id, data_reactive, con) {
           total_prescriptions = sum(total_prescriptions, na.rm = TRUE),
           unique_patients     = sum(unique_patients,     na.rm = TRUE),
           .groups = "drop"
+        ) |>
+        dplyr::mutate(
+          # Prescriptions per patient does not need population data
+          prescriptions_per_patient = dplyr::if_else(
+            unique_patients > 0,
+            total_prescriptions / unique_patients,
+            NA_real_
+          )
         )
 
       if ("region" %in% names(pop_data) && nrow(pop_data) > 0) {
@@ -319,20 +328,25 @@ mod_map_server <- function(id, data_reactive, con) {
 
       shiny::req(sf_data, r_data, mapping)
 
-      # Join aggregated data to NUTS_ID via lookup, then sum per NUTS polygon
-      # to correctly collapse multiple DB regions sharing one NUTS unit
+      # Join aggregated data to NUTS_ID via lookup, then sum/average per NUTS polygon
       r_data_mapped <- r_data |>
         dplyr::left_join(mapping, by = c("region" = "db_region")) |>
         dplyr::filter(!is.na(NUTS_ID)) |>
         dplyr::group_by(NUTS_ID) |>
         dplyr::summarise(
-          total_prescriptions    = sum(total_prescriptions, na.rm = TRUE),
-          unique_patients        = sum(unique_patients,     na.rm = TRUE),
-          population             = sum(population,          na.rm = TRUE),
-          prescriptions_per_100k = (sum(total_prescriptions, na.rm = TRUE) /
-                                      sum(population,          na.rm = TRUE)) * 100000,
-          patients_per_100k      = (sum(unique_patients,     na.rm = TRUE) /
-                                      sum(population,          na.rm = TRUE)) * 100000,
+          total_prescriptions       = sum(total_prescriptions,  na.rm = TRUE),
+          unique_patients           = sum(unique_patients,      na.rm = TRUE),
+          population                = sum(population,           na.rm = TRUE),
+          prescriptions_per_100k    = (sum(total_prescriptions, na.rm = TRUE) /
+                                         sum(population,         na.rm = TRUE)) * 100000,
+          patients_per_100k         = (sum(unique_patients,     na.rm = TRUE) /
+                                         sum(population,         na.rm = TRUE)) * 100000,
+          # Intensity: aggregate totals first, then divide (avoids averaging averages)
+          prescriptions_per_patient = dplyr::if_else(
+            sum(unique_patients, na.rm = TRUE) > 0,
+            sum(total_prescriptions, na.rm = TRUE) / sum(unique_patients, na.rm = TRUE),
+            NA_real_
+          ),
           .groups = "drop"
         )
 
@@ -366,22 +380,30 @@ mod_map_server <- function(id, data_reactive, con) {
 
       metric_label <- switch(
         metric,
-        "total_prescriptions"    = "Total Prescriptions",
-        "unique_patients"        = "Unique Patients",
-        "prescriptions_per_100k" = "Prescriptions per 100K",
-        "patients_per_100k"      = "Patients per 100K",
+        "total_prescriptions"       = "Total Prescriptions",
+        "unique_patients"           = "Unique Patients",
+        "prescriptions_per_100k"    = "Prescriptions per 100K",
+        "patients_per_100k"         = "Patients per 100K",
+        "prescriptions_per_patient" = "Prescriptions per Patient",
         metric
       )
+
+      # Format tooltip values appropriately for each metric
+      format_value <- function(x, metric) {
+        if (is.na(x)) return("No data")
+        if (metric == "prescriptions_per_patient") {
+          # Show two decimal places for intensity (typically a small number)
+          formatC(round(x, 2), format = "f", digits = 2, big.mark = ",")
+        } else {
+          format(round(x, 1), big.mark = ",")
+        }
+      }
 
       labels <- sprintf(
         "<strong>%s</strong><br/>%s: %s",
         map_joined$NUTS_NAME,
         metric_label,
-        ifelse(
-          is.na(map_joined$plot_metric),
-          "No data",
-          format(round(map_joined$plot_metric, 1), big.mark = ",")
-        )
+        mapply(format_value, map_joined$plot_metric, metric)
       ) |> lapply(htmltools::HTML)
 
       leaflet::leaflet(data = map_joined) |>

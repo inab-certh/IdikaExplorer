@@ -10,12 +10,11 @@
 
 app_ui <- function(request) {
   shiny::tagList(
-    # Golem's resource management (stays the same)
     golem_add_external_resources(),
 
     shinydashboardPlus::dashboardPage(
       header = shinydashboard::dashboardHeader(
-        title = golem::get_golem_options("app_title")  # From config
+        title = golem::get_golem_options("app_title")
       ),
 
       sidebar = shinydashboard::dashboardSidebar(
@@ -50,36 +49,38 @@ app_ui <- function(request) {
           shinydashboard::tabItem(
             tabName = "subgroup_analysis",
             shiny::h2("Subgroup analysis"),
-            # Grouping selector at the top, outside tabs
             mod_grouping_selector_ui("grouping_selector"),
             shiny::br(),
-            # Tabset for different views of the subgroup data
             shiny::tabsetPanel(
               id = "subgroup_tabs",
               type = "tabs",
-              
-              # General tab - Summary table
+
               shiny::tabPanel(
                 title = "General",
                 value = "general",
                 shiny::br(),
                 mod_summary_table_ui("summary_table")
               ),
-              
-              # Time Series tab
+
               shiny::tabPanel(
                 title = "Time Series",
                 value = "time_series",
                 shiny::br(),
                 mod_time_series_ui("time_series")
               ),
-              
-              # Map tab
+
               shiny::tabPanel(
                 title = "Map",
                 value = "map",
                 shiny::br(),
                 mod_map_ui("map_view")
+              ),
+
+              shiny::tabPanel(
+                title = "Heatmap",
+                value = "heatmap",
+                shiny::br(),
+                mod_heatmap_ui("heatmap_view")
               )
             )
           ),
@@ -91,7 +92,6 @@ app_ui <- function(request) {
         )
       ),
 
-      # shinydashboardPlus exclusive features
       controlbar = shinydashboardPlus::dashboardControlbar(),
 
       title = ""
@@ -100,9 +100,6 @@ app_ui <- function(request) {
 }
 
 #' Add external Resources to the Application
-#'
-#' This function is internally used to add external
-#' resources inside the Shiny application.
 #'
 #' @import shiny
 #' @importFrom golem add_resource_path activate_js favicon bundle_resources
@@ -118,31 +115,24 @@ golem_add_external_resources <- function() {
       path = golem::app_sys('app/www'),
       app_title = 'IdikaExplorer'
     ),
-    # Custom CSS for Greek fonts and DataTable fixes
     shiny::tags$style(htmltools::HTML("
       body {
         font-family: 'Roboto', 'Helvetica Neue', Arial, sans-serif;
       }
-      
-      /* Fix DataTable alignment issues */
       .dataTables_wrapper {
         width: 100% !important;
       }
-      
       .dataTables_scrollBody {
         width: 100% !important;
       }
-      
       table.dataTable {
         width: 100% !important;
         margin: 0 auto;
       }
-      
       .tab-content {
         overflow: visible !important;
       }
     ")),
-    # JavaScript to recalculate DataTables on tab switch
     shiny::tags$script(htmltools::HTML("
       $(document).ready(function() {
         $('.sidebar-menu li a').on('click', function() {
