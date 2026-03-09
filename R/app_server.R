@@ -1,6 +1,6 @@
 #' The application server-side
-#' 
-#' @param input,output,session Internal parameters for {shiny}. 
+#'
+#' @param input,output,session Internal parameters for {shiny}.
 #'     DO NOT REMOVE.
 #' @noRd
 app_server <- function(input, output, session) {
@@ -11,7 +11,8 @@ app_server <- function(input, output, session) {
     DBI::dbDisconnect(con, shutdown = TRUE)
   })
 
-  # Tab 1: Overall data with filters
+  # ── Tab 1: Overall data with filters ──────────────────────────────────────
+
   overall_data <- mod_data_filters_server("filters_overall", con = con)
 
   overall_display_data <- shiny::reactive({
@@ -24,26 +25,50 @@ app_server <- function(input, output, session) {
 
   mod_raw_table_server("raw_table_1", data_reactive = overall_display_data)
 
-  # Tab 2: Subgroup Analysis
+  # ── Groups (defined in Overall data tab) ─────────────────────────────────
+  # groups() returns list(atc = list(...), icd10 = list(...))
+  # Applied only after the user clicks "Apply groups".
+  groups <- mod_groups_server("groups")
+
+  # ── Grouped display data ─────────────────────────────────────────────────
+  # Replace raw atc_code / icd10 values with group names wherever a group
+  # pattern matches.  When no groups are defined the data is returned as-is.
+  grouped_display_data <- shiny::reactive({
+    data <- overall_display_data()
+    grps <- groups()
+
+    if (length(grps$atc) == 0L && length(grps$icd10) == 0L) {
+      return(data)
+    }
+
+    data |>
+      dplyr::mutate(
+        atc_code = apply_groups_to_codes(atc_code, grps$atc,  strip_dots = FALSE),
+        icd10    = apply_groups_to_codes(icd10,    grps$icd10, strip_dots = TRUE)
+      )
+  })
+
+  # ── Tab 2: Subgroup Analysis ───────────────────────────────────────────────
+
   selected_grouping_vars <- mod_grouping_selector_server(
-    "grouping_selector", 
-    filtered_data_reactive = overall_display_data
+    "grouping_selector",
+    filtered_data_reactive = grouped_display_data
   )
 
   pop_by_region <- shiny::reactive({
-    display_data <- overall_display_data()
+    display_data <- grouped_display_data()
     shiny::req(nrow(display_data) > 0)
     grouping_vars <- selected_grouping_vars()
 
-    sex <- get_field_ids(con, "sex", display_data$sex |> unique())
+    sex       <- get_field_ids(con, "sex",       display_data$sex       |> unique())
     age_group <- get_field_ids(con, "age_group", display_data$age_group |> unique())
-    region <- get_field_ids(con, "region", display_data$region |> unique())
+    region    <- get_field_ids(con, "region",    display_data$region    |> unique())
 
     sql_query <- generate_sql_query(
-      table = "population_by_region",
+      table     = "population_by_region",
       age_group = age_group,
-      sex = sex,
-      region = region
+      sex       = sex,
+      region    = region
     )
 
     applied_grouping_vars <- intersect(
@@ -77,8 +102,8 @@ app_server <- function(input, output, session) {
     }
 
     list(
-      denominator = denominator,
-      grouping_vars = grouping_vars,
+      denominator           = denominator,
+      grouping_vars         = grouping_vars,
       applied_grouping_vars = applied_grouping_vars
     )
   })
@@ -91,41 +116,42 @@ app_server <- function(input, output, session) {
     message("========================\n")
   })
 
-  # Subgroup Analysis - General Tab (Summary Table)
+  # General tab (Summary Table)
   mod_summary_table_server(
-    "summary_table", 
-    data_reactive = overall_display_data,
+    "summary_table",
+    data_reactive         = grouped_display_data,
     grouping_vars_reactive = selected_grouping_vars,
-    denominator_reactive = pop_by_region
+    denominator_reactive  = pop_by_region
   )
-  
-  # Subgroup Analysis - Time Series Tab
+
+  # Time Series tab
   mod_time_series_server(
     "time_series",
-    data_reactive = overall_display_data,
+    data_reactive         = grouped_display_data,
     grouping_vars_reactive = selected_grouping_vars,
-    denominator_reactive = pop_by_region,
-    con = con
+    denominator_reactive  = pop_by_region,
+    con                   = con
   )
 
-  # Subgroup Analysis - Map Tab
+  # Map tab
   mod_map_server(
     "map_view",
-    data_reactive = overall_display_data,
-    con = con
+    data_reactive = grouped_display_data,
+    con           = con
   )
 
-  # Subgroup Analysis - Groups Tab
-  groups <- mod_groups_server("groups")
-
-  # Subgroup Analysis - Heatmap Tab
+  # Heatmap tab
+  # The heatmap module has its own internal grouping logic (mod_groups).
+  # Now that groups live in the Overall tab we pass them in directly so the
+  # heatmap can still collapse codes into named groups on the plot axes,
+  # while the *input* data already has grouped codes from grouped_display_data.
   mod_heatmap_server(
     "heatmap_view",
-    data_reactive = overall_display_data,
+    data_reactive = grouped_display_data,
     groups        = groups,
     con           = con
   )
-  
+
   # Tab 3: Code Definitions
   mod_code_lookup_server("code_lookup", con = con)
 }

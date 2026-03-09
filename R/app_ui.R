@@ -40,12 +40,36 @@ app_ui <- function(request) {
 
       body = shinydashboard::dashboardBody(
         shinydashboard::tabItems(
+
+          # ── Tab 1: Overall data ──────────────────────────────────────────
           shinydashboard::tabItem(
             tabName = "overall",
             shiny::h2("Overall data"),
+
+            # Filters
             mod_data_filters_ui("filters_overall"),
-            mod_raw_table_ui("raw_table_1")
+
+            # Raw data table
+            mod_raw_table_ui("raw_table_1"),
+
+            shiny::hr(),
+
+            # ── Code Groups (setup for downstream analyses) ──────────────
+            shiny::h3(
+              shiny::icon("layer-group"),
+              " Code Groups",
+              style = "margin-top: 20px;"
+            ),
+            shiny::p(
+              shiny::icon("circle-info"),
+              "Define groups of ATC drug codes and ICD-10 disease codes here.",
+              "When groups are defined, they replace individual codes in all",
+              shiny::strong("Subgroup Analysis"), "tabs."
+            ),
+            mod_groups_ui("groups")
           ),
+
+          # ── Tab 2: Subgroup analysis ─────────────────────────────────────
           shinydashboard::tabItem(
             tabName = "subgroup_analysis",
             shiny::h2("Subgroup analysis"),
@@ -77,13 +101,6 @@ app_ui <- function(request) {
               ),
 
               shiny::tabPanel(
-                title = "Groups",
-                value = "groups",
-                shiny::br(),
-                mod_groups_ui("groups")
-              ),
-
-              shiny::tabPanel(
                 title = "Heatmap",
                 value = "heatmap",
                 shiny::br(),
@@ -91,6 +108,8 @@ app_ui <- function(request) {
               )
             )
           ),
+
+          # ── Tab 3: Code Definitions ──────────────────────────────────────
           shinydashboard::tabItem(
             tabName = "code_lookup",
             shiny::h2("Code Definitions"),

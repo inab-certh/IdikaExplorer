@@ -25,9 +25,9 @@ mod_time_series_ui <- function(id) {
           "Select Metric:",
           choices = c(
             "Prescriptions per 100K" = "prescriptions_per_100k",
-            "Patients per 100K" = "patients_per_100k",
-            "Total Prescriptions" = "total_prescriptions",
-            "Unique Patients" = "unique_patients"
+            "Patients per 100K"      = "patients_per_100k",
+            "Total Prescriptions"    = "total_prescriptions",
+            "Unique Patients"        = "unique_patients"
           ),
           selected = "prescriptions_per_100k"
         )
@@ -36,8 +36,8 @@ mod_time_series_ui <- function(id) {
         4,
         shiny::selectInput(
           ns("atc_filter"),
-          "Filter by ATC Code:",
-          choices = NULL,
+          "Filter by ATC Code / Group:",
+          choices  = NULL,
           multiple = FALSE
         )
       ),
@@ -62,7 +62,7 @@ mod_time_series_ui <- function(id) {
       shiny::column(
         12,
         shiny::downloadButton(ns("download_plot"), "Download Plot (PNG)", class = "btn-primary"),
-        shiny::downloadButton(ns("download_data"), "Download Data (CSV)", class = "btn-secondary")
+        shiny::downloadButton(ns("download_data"), "Download Data (CSV)",  class = "btn-secondary")
       )
     )
   )
@@ -71,186 +71,170 @@ mod_time_series_ui <- function(id) {
 #' time_series Server Functions
 #'
 #' @noRd 
-mod_time_series_server <- function(id, data_reactive, grouping_vars_reactive, denominator_reactive, con) {
+mod_time_series_server <- function(id, data_reactive, grouping_vars_reactive,
+                                   denominator_reactive, con) {
   shiny::moduleServer(id, function(input, output, session) {
     ns <- session$ns
-    
-    # Populate ATC code dropdown with available codes from filtered data
+
+    # ── ATC filter dropdown ──────────────────────────────────────────────────
+    # Reflects whatever values are in the (already-grouped) display data.
     shiny::observe({
       data <- data_reactive()
       shiny::req(nrow(data) > 0)
-      
-      # Get unique ATC codes from filtered data
-      atc_codes <- sort(unique(data$atc_code))
-      
+
+      atc_values <- sort(unique(data$atc_code))
+
       shiny::updateSelectInput(
-        session,
-        "atc_filter",
-        choices = c("All ATC Codes" = "all", setNames(atc_codes, atc_codes)),
+        session, "atc_filter",
+        choices  = c("All ATC Codes / Groups" = "all",
+                     stats::setNames(atc_values, atc_values)),
         selected = "all"
       )
     })
-    
-    # Prepare time series data
+
+    # ── Prepare time-series data ─────────────────────────────────────────────
     time_series_data <- shiny::reactive({
-      data <- data_reactive()
+      data          <- data_reactive()
       grouping_vars <- grouping_vars_reactive()
       denominator_data <- denominator_reactive()
-      
+
       shiny::req(nrow(data) > 0)
       shiny::req("prescription_insert_year" %in% names(data))
-      
-      # Filter by ATC code if selected
+
+      # Optional ATC filter
       if (!is.null(input$atc_filter) && input$atc_filter != "all") {
-        data <- data |>
-          dplyr::filter(atc_code == input$atc_filter)
+        data <- data |> dplyr::filter(atc_code == input$atc_filter)
       }
-      
-      # Check if we have data after filtering
-      if (nrow(data) == 0) {
-        return(NULL)
-      }
-      
-      # Always group by year, plus any selected grouping variables
+
+      if (nrow(data) == 0) return(NULL)
+
+      # Always group by year plus any selected variables
       group_vars <- unique(c("prescription_insert_year", grouping_vars))
-      
-      # Remove variables that don't exist in the data or aren't relevant for time series
+
       available_vars <- intersect(
         group_vars,
-        c("prescription_insert_year", "age_group", "sex", "region", "icd10", "atc_code")
+        c("prescription_insert_year", "age_group", "sex",
+          "region", "icd10", "atc_code")
       )
-      
-      # Aggregate data
+
       summary_data <- data |>
         dplyr::group_by(dplyr::across(dplyr::all_of(available_vars))) |>
         dplyr::summarise(
           total_prescriptions = sum(total_prescriptions, na.rm = TRUE),
-          unique_patients = sum(unique_patients, na.rm = TRUE),
+          unique_patients     = sum(unique_patients,     na.rm = TRUE),
           .groups = "drop"
         )
-      
-      # Join with population data for rates
-      demographic_vars <- intersect(
-        available_vars,
-        c("age_group", "sex", "region")
-      )
-      
+
+      # Join population denominator for rate calculations
+      demographic_vars <- intersect(available_vars,
+                                    c("age_group", "sex", "region"))
+
       if (length(demographic_vars) > 0) {
-        # Join with denominator
-        join_vars <- intersect(
-          available_vars,
-          names(denominator_data$denominator)
-        )
-        
+        join_vars <- intersect(available_vars,
+                               names(denominator_data$denominator))
+
         if (length(join_vars) > 0) {
           summary_data <- summary_data |>
-            dplyr::left_join(
-              denominator_data$denominator,
-              by = join_vars
-            )
+            dplyr::left_join(denominator_data$denominator, by = join_vars)
         } else {
-          # Use total population if no matching variables
           summary_data$population <- sum(denominator_data$denominator$population)
         }
-        
-        # Calculate rates
+
         summary_data <- summary_data |>
           dplyr::mutate(
             prescriptions_per_100k = (total_prescriptions / population) * 100000,
-            patients_per_100k = (unique_patients / population) * 100000
+            patients_per_100k      = (unique_patients     / population) * 100000
           )
       } else {
-        # No demographic grouping - can't calculate rates
-        summary_data$prescriptions_per_100k <- NA
-        summary_data$patients_per_100k <- NA
+        summary_data$prescriptions_per_100k <- NA_real_
+        summary_data$patients_per_100k      <- NA_real_
       }
-      
+
       summary_data
     })
-    
-    # Generate the plot
+
+    # ── Plot ─────────────────────────────────────────────────────────────────
     output$time_plot <- plotly::renderPlotly({
       data <- time_series_data()
-      
-      shiny::req(!is.null(data))
-      shiny::req(nrow(data) > 0)
-      
-      metric <- input$metric
+      shiny::req(!is.null(data), nrow(data) > 0)
+
+      metric        <- input$metric
       grouping_vars <- grouping_vars_reactive()
-      
-      # Determine grouping variable for lines (exclude year)
+
       line_group_vars <- setdiff(grouping_vars, "prescription_insert_year")
-      
-      # Create a group identifier for coloring
+
       if (length(line_group_vars) > 0) {
         data <- data |>
           dplyr::mutate(
             group_label = dplyr::case_when(
-              length(line_group_vars) == 1 ~ as.character(.data[[line_group_vars[1]]]),
-              TRUE ~ paste(!!!rlang::syms(line_group_vars), sep = " | ")
+              length(line_group_vars) == 1 ~
+                as.character(.data[[line_group_vars[1]]]),
+              TRUE ~
+                paste(!!!rlang::syms(line_group_vars), sep = " | ")
             )
           )
       } else {
         data$group_label <- "All Data"
       }
-      
-      # Create metric label
+
       metric_label <- dplyr::case_when(
         metric == "prescriptions_per_100k" ~ "Prescriptions per 100K",
-        metric == "patients_per_100k" ~ "Patients per 100K",
-        metric == "total_prescriptions" ~ "Total Prescriptions",
-        metric == "unique_patients" ~ "Unique Patients",
-        TRUE ~ metric
+        metric == "patients_per_100k"      ~ "Patients per 100K",
+        metric == "total_prescriptions"    ~ "Total Prescriptions",
+        metric == "unique_patients"        ~ "Unique Patients",
+        TRUE                               ~ metric
       )
-      
-      # Check if metric is available
+
       if (!(metric %in% names(data))) {
         return(
           plotly::plot_ly() |>
             plotly::layout(
               title = "Cannot display this metric",
               annotations = list(
-                text = "Rates (per 100K) require demographic grouping variables (age, sex, or region)",
-                showarrow = FALSE,
-                xref = "paper",
-                yref = "paper",
-                x = 0.5,
-                y = 0.5,
-                font = list(size = 16)
+                text = paste(
+                  "Rates (per 100K) require demographic grouping variables",
+                  "(age, sex, or region)"
+                ),
+                showarrow = FALSE, xref = "paper", yref = "paper",
+                x = 0.5, y = 0.5, font = list(size = 16)
               )
             )
         )
       }
-      
-      # Check for NA values
+
       if (all(is.na(data[[metric]]))) {
         return(
           plotly::plot_ly() |>
             plotly::layout(
               title = "Cannot calculate rates",
               annotations = list(
-                text = "Please select at least one demographic grouping variable (Age, Sex, or Region) to calculate rates",
-                showarrow = FALSE,
-                xref = "paper",
-                yref = "paper",
-                x = 0.5,
-                y = 0.5,
-                font = list(size = 16)
+                text = paste(
+                  "Please select at least one demographic grouping variable",
+                  "(Age, Sex, or Region) to calculate rates"
+                ),
+                showarrow = FALSE, xref = "paper", yref = "paper",
+                x = 0.5, y = 0.5, font = list(size = 16)
               )
             )
         )
       }
-      
-      # Create the plot
-      p <- plotly::plot_ly(
-        data = data,
-        x = ~prescription_insert_year,
-        y = ~get(metric),
-        color = ~group_label,
-        type = "scatter",
-        mode = if (input$show_points) "lines+markers" else "lines",
-        marker = list(size = 8),
-        line = list(width = 2.5),
+
+      atc_title_suffix <- if (!is.null(input$atc_filter) &&
+                               input$atc_filter != "all") {
+        paste0(" (ATC: ", input$atc_filter, ")")
+      } else {
+        ""
+      }
+
+      plotly::plot_ly(
+        data          = data,
+        x             = ~prescription_insert_year,
+        y             = ~get(metric),
+        color         = ~group_label,
+        type          = "scatter",
+        mode          = if (input$show_points) "lines+markers" else "lines",
+        marker        = list(size = 8),
+        line          = list(width = 2.5),
         hovertemplate = paste0(
           "<b>%{fullData.name}</b><br>",
           "Year: %{x}<br>",
@@ -260,73 +244,46 @@ mod_time_series_server <- function(id, data_reactive, grouping_vars_reactive, de
       ) |>
         plotly::layout(
           title = list(
-            text = paste0(
-              metric_label, " Over Time",
-              if (!is.null(input$atc_filter) && input$atc_filter != "all") {
-                paste0(" (ATC: ", input$atc_filter, ")")
-              } else {
-                ""
-              }
-            ),
+            text = paste0(metric_label, " Over Time", atc_title_suffix),
             font = list(size = 18)
           ),
           xaxis = list(
-            title = "Year",
-            dtick = 1,
+            title    = "Year",
+            dtick    = 1,
             gridcolor = "#e0e0e0"
           ),
           yaxis = list(
-            title = metric_label,
+            title    = metric_label,
             gridcolor = "#e0e0e0"
           ),
           hovermode = "closest",
           legend = list(
-            title = list(text = if (length(line_group_vars) > 0) {
-              paste(line_group_vars, collapse = " | ")
-            } else {
-              ""
-            }),
-            orientation = "v",
-            x = 1.02,
-            y = 1
+            title = list(
+              text = if (length(line_group_vars) > 0)
+                paste(line_group_vars, collapse = " | ")
+              else ""
+            ),
+            orientation = "v", x = 1.02, y = 1
           ),
-          plot_bgcolor = "#ffffff",
+          plot_bgcolor  = "#ffffff",
           paper_bgcolor = "#ffffff"
         )
-      
-      p
     })
-    
-    # Download plot
+
+    # ── Downloads ─────────────────────────────────────────────────────────────
     output$download_plot <- shiny::downloadHandler(
-      filename = function() {
-        paste0("time_series_", input$metric, "_", Sys.Date(), ".png")
-      },
-      content = function(file) {
-        p <- plotly::plotly_build(
-          plotly::ggplotly(
-            ggplot2::last_plot()
-          )
-        )
+      filename = function() paste0("time_series_", input$metric, "_", Sys.Date(), ".png"),
+      content  = function(file) {
+        p <- plotly::plotly_build(plotly::ggplotly(ggplot2::last_plot()))
         plotly::export(p, file = file)
       }
     )
-    
-    # Download data
+
     output$download_data <- shiny::downloadHandler(
-      filename = function() {
-        paste0("time_series_data_", Sys.Date(), ".csv")
-      },
-      content = function(file) {
-        data <- time_series_data()
-        readr::write_csv(data, file)
+      filename = function() paste0("time_series_data_", Sys.Date(), ".csv"),
+      content  = function(file) {
+        readr::write_csv(time_series_data(), file)
       }
     )
   })
 }
-
-## To be copied in the UI
-# mod_time_series_ui("time_series_1")
-
-## To be copied in the server
-# mod_time_series_server("time_series_1")
