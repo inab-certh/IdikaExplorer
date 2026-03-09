@@ -115,11 +115,15 @@ app_server <- function(input, output, session) {
     con = con
   )
 
+  # Subgroup Analysis - Groups Tab
+  groups <- mod_groups_server("groups")
+
   # Subgroup Analysis - Heatmap Tab
   mod_heatmap_server(
     "heatmap_view",
     data_reactive = overall_display_data,
-    con = con
+    groups        = groups,
+    con           = con
   )
   
   # Tab 3: Code Definitions

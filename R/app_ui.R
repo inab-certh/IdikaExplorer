@@ -77,6 +77,13 @@ app_ui <- function(request) {
               ),
 
               shiny::tabPanel(
+                title = "Groups",
+                value = "groups",
+                shiny::br(),
+                mod_groups_ui("groups")
+              ),
+
+              shiny::tabPanel(
                 title = "Heatmap",
                 value = "heatmap",
                 shiny::br(),
