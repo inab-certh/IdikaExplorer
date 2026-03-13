@@ -6,24 +6,28 @@ Authors@R:
 Description: Shiny application for exploring the data extracted from the IDIKA database
 License: Apache License (>= 2)
 Imports: 
-    attempt,
     config,
     DBI,
-    devtools,
     dplyr,
     DT,
     duckdb,
     eurostat,
+    ggplot2,
     glue,
     golem,
     htmltools,
     leaflet,
     plotly,
+    purrr,
     readr,
+    rlang,
+    sf,
     shiny,
     shinycssloaders,
     shinydashboard,
     shinydashboardPlus
+Suggests:
+    devtools
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.3.3

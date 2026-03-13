@@ -2,7 +2,6 @@
 get_region_nuts_mapping <- function() {
   data.frame(
     db_region = c(
-      # ΑΤΤΙΚΗ - all map to dissolved EL300
       "ΠΕΡΙΦΕΡΕΙΑ ΑΤΤΙΚΗΣ",
       "ΠΕΡΙΦΕΡΕΙΑΚΗ ΕΝΟΤΗΤΑ ΒΟΡΕΙΟΥ ΤΟΜΕΑ ΑΘΗΝΩΝ",
       "ΠΕΡΙΦΕΡΕΙΑΚΗ ΕΝΟΤΗΤΑ ΔΥΤΙΚΟΥ ΤΟΜΕΑ ΑΘΗΝΩΝ",
@@ -12,27 +11,22 @@ get_region_nuts_mapping <- function() {
       "ΠΕΡΙΦΕΡΕΙΑΚΗ ΕΝΟΤΗΤΑ ΔΥΤΙΚΗΣ ΑΤΤΙΚΗΣ",
       "ΠΕΡΙΦΕΡΕΙΑΚΗ ΕΝΟΤΗΤΑ ΠΕΙΡΑΙΩΣ",
       "ΠΕΡΙΦΕΡΕΙΑΚΗ ΕΝΟΤΗΤΑ ΝΗΣΩΝ",
-      # ΒΟΡΕΙΟ ΑΙΓΑΙΟ
       "ΠΕΡΙΦΕΡΕΙΑΚΗ ΕΝΟΤΗΤΑ ΛΕΣΒΟΥ",
       "ΠΕΡΙΦΕΡΕΙΑΚΗ ΕΝΟΤΗΤΑ ΛΗΜΝΟΥ",
       "ΠΕΡΙΦΕΡΕΙΑΚΗ ΕΝΟΤΗΤΑ ΙΚΑΡΙΑΣ",
       "ΠΕΡΙΦΕΡΕΙΑΚΗ ΕΝΟΤΗΤΑ ΣΑΜΟΥ",
       "ΠΕΡΙΦΕΡΕΙΑΚΗ ΕΝΟΤΗΤΑ ΧΙΟΥ",
-      # ΝΟΤΙΟ ΑΙΓΑΙΟ - single region entry covering both Δωδεκάνησα and Κυκλάδες
       "ΠΕΡΙΦΕΡΕΙΑ ΝΟΤΙΟΥ ΑΙΓΑΙΟΥ",
-      # ΚΡΗΤΗ
       "ΠΕΡΙΦΕΡΕΙΑΚΗ ΕΝΟΤΗΤΑ ΗΡΑΚΛΕΙΟΥ",
       "ΠΕΡΙΦΕΡΕΙΑΚΗ ΕΝΟΤΗΤΑ ΛΑΣΙΘΙΟΥ",
       "ΠΕΡΙΦΕΡΕΙΑΚΗ ΕΝΟΤΗΤΑ ΡΕΘΥΜΝΟΥ",
       "ΠΕΡΙΦΕΡΕΙΑΚΗ ΕΝΟΤΗΤΑ ΧΑΝΙΩΝ",
-      # ΑΝΑΤΟΛΙΚΗ ΜΑΚΕΔΟΝΙΑ ΚΑΙ ΘΡΑΚΗ
       "ΠΕΡΙΦΕΡΕΙΑΚΗ ΕΝΟΤΗΤΑ ΕΒΡΟΥ",
       "ΠΕΡΙΦΕΡΕΙΑΚΗ ΕΝΟΤΗΤΑ ΞΑΝΘΗΣ",
       "ΠΕΡΙΦΕΡΕΙΑΚΗ ΕΝΟΤΗΤΑ ΡΟΔΟΠΗΣ",
       "ΠΕΡΙΦΕΡΕΙΑΚΗ ΕΝΟΤΗΤΑ ΔΡΑΜΑΣ",
       "ΠΕΡΙΦΕΡΕΙΑΚΗ ΕΝΟΤΗΤΑ ΘΑΣΟΥ",
       "ΠΕΡΙΦΕΡΕΙΑΚΗ ΕΝΟΤΗΤΑ ΚΑΒΑΛΑΣ",
-      # ΚΕΝΤΡΙΚΗ ΜΑΚΕΔΟΝΙΑ
       "ΠΕΡΙΦΕΡΕΙΑΚΗ ΕΝΟΤΗΤΑ ΗΜΑΘΙΑΣ",
       "ΠΕΡΙΦΕΡΕΙΑΚΗ ΕΝΟΤΗΤΑ ΘΕΣΣΑΛΟΝΙΚΗΣ",
       "ΠΕΡΙΦΕΡΕΙΑΚΗ ΕΝΟΤΗΤΑ ΚΙΛΚΙΣ",
@@ -40,39 +34,32 @@ get_region_nuts_mapping <- function() {
       "ΠΕΡΙΦΕΡΕΙΑΚΗ ΕΝΟΤΗΤΑ ΠΙΕΡΙΑΣ",
       "ΠΕΡΙΦΕΡΕΙΑΚΗ ΕΝΟΤΗΤΑ ΣΕΡΡΩΝ",
       "ΠΕΡΙΦΕΡΕΙΑΚΗ ΕΝΟΤΗΤΑ ΧΑΛΚΙΔΙΚΗΣ",
-      # ΔΥΤΙΚΗ ΜΑΚΕΔΟΝΙΑ
       "ΠΕΡΙΦΕΡΕΙΑΚΗ ΕΝΟΤΗΤΑ ΓΡΕΒΕΝΩΝ",
       "ΠΕΡΙΦΕΡΕΙΑΚΗ ΕΝΟΤΗΤΑ ΚΟΖΑΝΗΣ",
       "ΠΕΡΙΦΕΡΕΙΑΚΗ ΕΝΟΤΗΤΑ ΚΑΣΤΟΡΙΑΣ",
       "ΠΕΡΙΦΕΡΕΙΑΚΗ ΕΝΟΤΗΤΑ ΦΛΩΡΙΝΑΣ",
-      # ΗΠΕΙΡΟΣ
       "ΠΕΡΙΦΕΡΕΙΑΚΗ ΕΝΟΤΗΤΑ ΑΡΤΑΣ",
       "ΠΕΡΙΦΕΡΕΙΑΚΗ ΕΝΟΤΗΤΑ ΠΡΕΒΕΖΑΣ",
       "ΠΕΡΙΦΕΡΕΙΑΚΗ ΕΝΟΤΗΤΑ ΘΕΣΠΡΩΤΙΑΣ",
       "ΠΕΡΙΦΕΡΕΙΑΚΗ ΕΝΟΤΗΤΑ ΙΩΑΝΝΙΝΩΝ",
-      # ΘΕΣΣΑΛΙΑ
       "ΠΕΡΙΦΕΡΕΙΑΚΗ ΕΝΟΤΗΤΑ ΚΑΡΔΙΤΣΑΣ",
       "ΠΕΡΙΦΕΡΕΙΑΚΗ ΕΝΟΤΗΤΑ ΤΡΙΚΑΛΩΝ",
       "ΠΕΡΙΦΕΡΕΙΑΚΗ ΕΝΟΤΗΤΑ ΛΑΡΙΣΑΣ",
       "ΠΕΡΙΦΕΡΕΙΑΚΗ ΕΝΟΤΗΤΑ ΜΑΓΝΗΣΙΑΣ",
       "ΠΕΡΙΦΕΡΕΙΑΚΗ ΕΝΟΤΗΤΑ ΣΠΟΡΑΔΩΝ",
-      # ΙΟΝΙΟΙ ΝΗΣΟΙ
       "ΠΕΡΙΦΕΡΕΙΑΚΗ ΕΝΟΤΗΤΑ ΖΑΚΥΝΘΟΥ",
       "ΠΕΡΙΦΕΡΕΙΑΚΗ ΕΝΟΤΗΤΑ ΚΕΡΚΥΡΑΣ",
       "ΠΕΡΙΦΕΡΕΙΑΚΗ ΕΝΟΤΗΤΑ ΙΘΑΚΗΣ",
       "ΠΕΡΙΦΕΡΕΙΑΚΗ ΕΝΟΤΗΤΑ ΚΕΦΑΛΛΗΝΙΑΣ",
       "ΠΕΡΙΦΕΡΕΙΑΚΗ ΕΝΟΤΗΤΑ ΛΕΥΚΑΔΑΣ",
-      # ΔΥΤΙΚΗ ΕΛΛΑΔΑ
       "ΠΕΡΙΦΕΡΕΙΑΚΗ ΕΝΟΤΗΤΑ ΑΙΤΩΛΟΑΚΑΡΝΑΝΙΑΣ",
       "ΠΕΡΙΦΕΡΕΙΑΚΗ ΕΝΟΤΗΤΑ ΑΧΑΪΑΣ",
       "ΠΕΡΙΦΕΡΕΙΑΚΗ ΕΝΟΤΗΤΑ ΗΛΕΙΑΣ",
-      # ΣΤΕΡΕΑ ΕΛΛΑΔΑ
       "ΠΕΡΙΦΕΡΕΙΑΚΗ ΕΝΟΤΗΤΑ ΒΟΙΩΤΙΑΣ",
       "ΠΕΡΙΦΕΡΕΙΑΚΗ ΕΝΟΤΗΤΑ ΕΥΒΟΙΑΣ",
       "ΠΕΡΙΦΕΡΕΙΑΚΗ ΕΝΟΤΗΤΑ ΕΥΡΥΤΑΝΙΑΣ",
       "ΠΕΡΙΦΕΡΕΙΑΚΗ ΕΝΟΤΗΤΑ ΦΘΙΩΤΙΔΑΣ",
       "ΠΕΡΙΦΕΡΕΙΑΚΗ ΕΝΟΤΗΤΑ ΦΩΚΙΔΑΣ",
-      # ΠΕΛΟΠΟΝΝΗΣΟΣ
       "ΠΕΡΙΦΕΡΕΙΑΚΗ ΕΝΟΤΗΤΑ ΑΡΓΟΛΙΔΑΣ",
       "ΠΕΡΙΦΕΡΕΙΑΚΗ ΕΝΟΤΗΤΑ ΑΡΚΑΔΙΑΣ",
       "ΠΕΡΙΦΕΡΕΙΑΚΗ ΕΝΟΤΗΤΑ ΚΟΡΙΝΘΙΑΣ",
@@ -80,47 +67,34 @@ get_region_nuts_mapping <- function() {
       "ΠΕΡΙΦΕΡΕΙΑΚΗ ΕΝΟΤΗΤΑ ΜΕΣΣΗΝΙΑΣ"
     ),
     NUTS_ID = c(
-      # ΑΤΤΙΚΗ
       "EL300", "EL300", "EL300", "EL300", "EL300",
       "EL300", "EL300", "EL300", "EL300",
-      # ΒΟΡΕΙΟ ΑΙΓΑΙΟ
-      "EL411", "EL411",  # Λέσβος + Λήμνος -> EL411
-      "EL412", "EL412",  # Ικαρία + Σάμος  -> EL412
-      "EL413",           # Χίος             -> EL413
-      # ΝΟΤΙΟ ΑΙΓΑΙΟ - dissolved into EL420
+      "EL411", "EL411",
+      "EL412", "EL412",
+      "EL413",
       "EL420",
-      # ΚΡΗΤΗ
       "EL431", "EL432", "EL433", "EL434",
-      # ΑΝΑΤΟΛΙΚΗ ΜΑΚΕΔΟΝΙΑ ΚΑΙ ΘΡΑΚΗ
       "EL511", "EL512", "EL513", "EL514",
-      "EL515", "EL515",  # Θάσος + Καβάλα -> EL515
-      # ΚΕΝΤΡΙΚΗ ΜΑΚΕΔΟΝΙΑ
+      "EL515", "EL515",
       "EL521", "EL522", "EL523", "EL524", "EL525", "EL526", "EL527",
-      # ΔΥΤΙΚΗ ΜΑΚΕΔΟΝΙΑ
-      "EL531", "EL531",  # Γρεβενά + Κοζάνη -> EL531
-      "EL532",           # Καστοριά          -> EL532
-      "EL533",           # Φλώρινα           -> EL533
-      # ΗΠΕΙΡΟΣ
-      "EL541", "EL541",  # Άρτα + Πρέβεζα   -> EL541
-      "EL542",           # Θεσπρωτία         -> EL542
-      "EL543",           # Ιωάννινα          -> EL543
-      # ΘΕΣΣΑΛΙΑ
-      "EL611", "EL611",  # Καρδίτσα + Τρίκαλα   -> EL611
-      "EL612",           # Λάρισα                -> EL612
-      "EL613", "EL613",  # Μαγνησία + Σποράδες   -> EL613
-      # ΙΟΝΙΟΙ ΝΗΣΟΙ
-      "EL621",           # Ζάκυνθος          -> EL621
-      "EL622",           # Κέρκυρα           -> EL622
-      "EL623", "EL623",  # Ιθάκη + Κεφαλληνία -> EL623
-      "EL624",           # Λευκάδα           -> EL624
-      # ΔΥΤΙΚΗ ΕΛΛΑΔΑ
+      "EL531", "EL531",
+      "EL532",
+      "EL533",
+      "EL541", "EL541",
+      "EL542",
+      "EL543",
+      "EL611", "EL611",
+      "EL612",
+      "EL613", "EL613",
+      "EL621",
+      "EL622",
+      "EL623", "EL623",
+      "EL624",
       "EL631", "EL632", "EL633",
-      # ΣΤΕΡΕΑ ΕΛΛΑΔΑ
       "EL641", "EL642", "EL643", "EL644", "EL645",
-      # ΠΕΛΟΠΟΝΝΗΣΟΣ
-      "EL651", "EL651",  # Αργολίδα + Αρκαδία  -> EL651
-      "EL652",           # Κορινθία             -> EL652
-      "EL653", "EL653"   # Λακωνία + Μεσσηνία  -> EL653
+      "EL651", "EL651",
+      "EL652",
+      "EL653", "EL653"
     ),
     stringsAsFactors = FALSE
   )
@@ -153,6 +127,15 @@ mod_map_ui <- function(id) {
           ),
           selected = "total_prescriptions"
         )
+      ),
+      shiny::column(
+        4,
+        shiny::selectInput(
+          ns("atc_filter"),
+          "Filter by ATC Code / Group:",
+          choices  = NULL,
+          multiple = FALSE
+        )
       )
     ),
     shiny::fluidRow(
@@ -171,8 +154,22 @@ mod_map_server <- function(id, data_reactive, con) {
   shiny::moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
-    # Require sf to explicitly load S3 spatial methods for Leaflet
     require(sf)
+
+    # ── ATC filter dropdown ──────────────────────────────────────────────────
+    shiny::observe({
+      data <- data_reactive()
+      shiny::req(nrow(data) > 0)
+
+      atc_values <- sort(unique(data$atc_code))
+
+      shiny::updateSelectInput(
+        session, "atc_filter",
+        choices  = c("All ATC Codes / Groups" = "all",
+                     stats::setNames(atc_values, atc_values)),
+        selected = "all"
+      )
+    })
 
     # 1. Fetch map data via eurostat, dissolve Attica into a single polygon
     map_data_sf <- shiny::reactiveVal(NULL)
@@ -186,26 +183,24 @@ mod_map_server <- function(id, data_reactive, con) {
         sf::st_cast("MULTIPOLYGON") |>
         sf::st_make_valid()
 
-      # Dissolve all Attica NUTS3 units into a single polygon keyed as EL300
       attica_ids <- c("EL301", "EL302", "EL303", "EL304", "EL305", "EL306", "EL307")
 
       attica_dissolved <- gr_nuts3 |>
         dplyr::filter(NUTS_ID %in% attica_ids) |>
         dplyr::summarise(
           NUTS_ID   = "EL300",
-          NUTS_NAME = "\u0391\u03c4\u03c4\u03b9\u03ba\u03ae",  # Αττική
+          NUTS_NAME = "\u0391\u03c4\u03c4\u03b9\u03ba\u03ae",
           geometry  = sf::st_union(geometry)
         ) |>
         sf::st_as_sf()
 
-      # Dissolve Δωδεκάνησα + Κυκλάδες into a single South Aegean polygon keyed as EL420
       south_aegean_ids <- c("EL421", "EL422")
 
       south_aegean_dissolved <- gr_nuts3 |>
         dplyr::filter(NUTS_ID %in% south_aegean_ids) |>
         dplyr::summarise(
           NUTS_ID   = "EL420",
-          NUTS_NAME = "\u039d\u03cc\u03c4\u03b9\u03bf \u0391\u03b9\u03b3\u03b1\u03af\u03bf",  # Νότιο Αιγαίο
+          NUTS_NAME = "\u039d\u03cc\u03c4\u03b9\u03bf \u0391\u03b9\u03b3\u03b1\u03af\u03bf",
           geometry  = sf::st_union(geometry)
         ) |>
         sf::st_as_sf()
@@ -281,12 +276,19 @@ mod_map_server <- function(id, data_reactive, con) {
       lookup[lookup$db_region %in% db_regions, ]
     })
 
-    # 4. Aggregate active data, join to denominator, compute all metrics
+    # 4. Aggregate active data, filtered by ATC selection
     region_aggregated_data <- shiny::reactive({
       data     <- data_reactive()
       pop_data <- map_denominator()
 
       shiny::req(nrow(data) > 0, "region" %in% names(data))
+
+      # Apply ATC filter before regional aggregation
+      if (!is.null(input$atc_filter) && input$atc_filter != "all") {
+        data <- data |> dplyr::filter(atc_code == input$atc_filter)
+      }
+
+      shiny::req(nrow(data) > 0)
 
       summary_data <- data |>
         dplyr::group_by(region) |>
@@ -296,7 +298,6 @@ mod_map_server <- function(id, data_reactive, con) {
           .groups = "drop"
         ) |>
         dplyr::mutate(
-          # Prescriptions per patient does not need population data
           prescriptions_per_patient = dplyr::if_else(
             unique_patients > 0,
             total_prescriptions / unique_patients,
@@ -328,7 +329,6 @@ mod_map_server <- function(id, data_reactive, con) {
 
       shiny::req(sf_data, r_data, mapping)
 
-      # Join aggregated data to NUTS_ID via lookup, then sum/average per NUTS polygon
       r_data_mapped <- r_data |>
         dplyr::left_join(mapping, by = c("region" = "db_region")) |>
         dplyr::filter(!is.na(NUTS_ID)) |>
@@ -341,7 +341,6 @@ mod_map_server <- function(id, data_reactive, con) {
                                          sum(population,         na.rm = TRUE)) * 100000,
           patients_per_100k         = (sum(unique_patients,     na.rm = TRUE) /
                                          sum(population,         na.rm = TRUE)) * 100000,
-          # Intensity: aggregate totals first, then divide (avoids averaging averages)
           prescriptions_per_patient = dplyr::if_else(
             sum(unique_patients, na.rm = TRUE) > 0,
             sum(total_prescriptions, na.rm = TRUE) / sum(unique_patients, na.rm = TRUE),
@@ -388,11 +387,15 @@ mod_map_server <- function(id, data_reactive, con) {
         metric
       )
 
-      # Format tooltip values appropriately for each metric
+      atc_subtitle <- if (!is.null(input$atc_filter) && input$atc_filter != "all") {
+        paste0(" \u2014 ", input$atc_filter)
+      } else {
+        ""
+      }
+
       format_value <- function(x, metric) {
         if (is.na(x)) return("No data")
         if (metric == "prescriptions_per_patient") {
-          # Show two decimal places for intensity (typically a small number)
           formatC(round(x, 2), format = "f", digits = 2, big.mark = ",")
         } else {
           format(round(x, 1), big.mark = ",")
@@ -402,7 +405,7 @@ mod_map_server <- function(id, data_reactive, con) {
       labels <- sprintf(
         "<strong>%s</strong><br/>%s: %s",
         map_joined$NUTS_NAME,
-        metric_label,
+        paste0(metric_label, atc_subtitle),
         mapply(format_value, map_joined$plot_metric, metric)
       ) |> lapply(htmltools::HTML)
 
@@ -433,10 +436,9 @@ mod_map_server <- function(id, data_reactive, con) {
           pal      = pal,
           values   = map_joined$plot_metric,
           opacity  = 0.7,
-          title    = metric_label,
+          title    = paste0(metric_label, atc_subtitle),
           position = "bottomright"
         )
     })
-
   })
 }
