@@ -23,7 +23,7 @@ app_server <- function(input, output, session) {
     }
   })
 
-  mod_raw_table_server("raw_table_1", data_reactive = overall_display_data)
+  # mod_raw_table_server("raw_table_1", data_reactive = overall_display_data)
 
   # ── Groups (defined in Overall data tab) ─────────────────────────────────
   # groups() returns list(atc = list(...), icd10 = list(...))

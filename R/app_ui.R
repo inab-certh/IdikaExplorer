@@ -49,8 +49,8 @@ app_ui <- function(request) {
             # Filters
             mod_data_filters_ui("filters_overall"),
 
-            # Raw data table
-            mod_raw_table_ui("raw_table_1"),
+            # # Raw data table
+            # mod_raw_table_ui("raw_table_1"),
 
             shiny::hr(),
 
